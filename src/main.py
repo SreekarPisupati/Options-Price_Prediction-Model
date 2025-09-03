@@ -70,17 +70,17 @@ class OptionsPredictionSystem:
     def _setup_logging(self) -> logging.Logger:
         """Setup comprehensive logging"""
         log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        # Create logs directory if it doesn't exist
+        os.makedirs('logs', exist_ok=True)
+        
         logging.basicConfig(
             level=logging.INFO, 
             format=log_format,
             handlers=[
-                logging.FileHandler('../logs/options_prediction.log'),
+                logging.FileHandler('logs/options_prediction.log'),
                 logging.StreamHandler()
             ]
         )
-        
-        # Create logs directory if it doesn't exist
-        os.makedirs('../logs', exist_ok=True)
         
         logger = logging.getLogger(__name__)
         return logger
@@ -188,7 +188,11 @@ class OptionsPredictionSystem:
                     for exp_date, chain_data in symbol_data['option_chains'].items():
                         # Process calls
                         if 'calls' in chain_data and not chain_data['calls'].empty:
-                            calls_df = chain_data['calls']
+                            calls_df = chain_data['calls'].copy()
+                            
+                            # Add current price to option data
+                            if 'current_price' in chain_data:
+                                calls_df['current_price'] = chain_data['current_price']
                             
                             # Filter for liquid options
                             liquid_calls = calls_df[
@@ -223,7 +227,11 @@ class OptionsPredictionSystem:
                         
                         # Process puts (similar logic)
                         if 'puts' in chain_data and not chain_data['puts'].empty:
-                            puts_df = chain_data['puts']
+                            puts_df = chain_data['puts'].copy()
+                            
+                            # Add current price to option data
+                            if 'current_price' in chain_data:
+                                puts_df['current_price'] = chain_data['current_price']
                             
                             liquid_puts = puts_df[
                                 (puts_df['volume'] > 0) & 
@@ -298,7 +306,7 @@ class OptionsPredictionSystem:
             self.training_results = training_results
             
             # Save trained models
-            self.ml_models.save_models("../models/")
+            self.ml_models.save_models("models/")
             
             self.logger.info(f"Model training completed. Best model: {self._get_best_model_name()}")
             return training_results
@@ -337,10 +345,14 @@ class OptionsPredictionSystem:
                         if option_type not in chain_data:
                             continue
                         
-                        option_df = chain_data[option_type]
+                        option_df = chain_data[option_type].copy()
                         
                         if option_df.empty:
                             continue
+                        
+                        # Add current price to option data
+                        if 'current_price' in chain_data:
+                            option_df['current_price'] = chain_data['current_price']
                         
                         # Engineer features
                         features_df = self.feature_engineer.engineer_all_features(
@@ -442,7 +454,7 @@ class OptionsPredictionSystem:
             self.logger.info("Starting real-time prediction system...")
             
             # Initialize real-time engine
-            self.realtime_engine = RealTimePredictionEngine(self.symbols, "../models/")
+            self.realtime_engine = RealTimePredictionEngine(self.symbols, "models/")
             
             # Add signal processing callback
             def signal_callback(signal):
@@ -514,9 +526,9 @@ class OptionsPredictionSystem:
             # Save to file
             if save_to_file:
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                report_filename = f"../docs/performance_report_{timestamp}.txt"
+                report_filename = f"docs/performance_report_{timestamp}.txt"
                 
-                os.makedirs('../docs', exist_ok=True)
+                os.makedirs('docs', exist_ok=True)
                 with open(report_filename, 'w') as f:
                     f.write(full_report)
                 
@@ -677,6 +689,8 @@ def main():
     elif args.mode == 'evaluate':
         # Evaluation only
         data = system.collect_training_data(save_data=False)
+        # Load existing models for evaluation
+        system.ml_models.load_models("models/")
         results = system.evaluate_models(data)
         report = system.generate_performance_report()
         print("Model evaluation completed")

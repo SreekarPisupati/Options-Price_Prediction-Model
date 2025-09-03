@@ -262,12 +262,7 @@ class OptionsMLModels:
             )
             
             # Fit model
-            grid_search.fit(
-                X_train, y_train,
-                eval_set=[(X_val, y_val)],
-                early_stopping_rounds=10,
-                verbose=False
-            )
+            grid_search.fit(X_train, y_train)
             
             best_model = grid_search.best_estimator_
             
@@ -320,8 +315,7 @@ class OptionsMLModels:
             lgb_model.fit(
                 X_train, y_train,
                 eval_set=[(X_val, y_val)],
-                early_stopping_rounds=50,
-                verbose=False
+                callbacks=[lgb.early_stopping(50), lgb.log_evaluation(0)]
             )
             
             # Evaluate
@@ -700,7 +694,8 @@ class OptionsMLModels:
             h5_files = glob.glob(f"{load_path}*.h5")
             for h5_file in h5_files:
                 model_name = os.path.basename(h5_file).replace('.h5', '')
-                self.models[model_name] = keras.models.load_model(h5_file)
+                # Load without compiling to avoid metric deserialization issues
+                self.models[model_name] = keras.models.load_model(h5_file, compile=False)
             
             self.logger.info(f"Loaded {len(self.models)} models from {load_path}")
             

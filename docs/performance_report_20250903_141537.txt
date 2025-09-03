@@ -1,0 +1,14 @@
+============================================================\nOPTIONS PRICE PREDICTION MODEL - PERFORMANCE REPORT\n============================================================\nGenerated on: 2025-09-03 14:15:37\n\nMODEL PERFORMANCE METRICS\n------------------------------\n
+============================================================
+
+
+TRAINING RESULTS
+--------------------
+
+
+SYSTEM CONFIGURATION
+----------------------
+Symbols analyzed: AAPL, GOOGL, MSFT
+Features engineered: 50
+Models trained: 0
+Real-time monitoring: Inactive

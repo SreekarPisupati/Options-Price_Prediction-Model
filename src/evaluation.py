@@ -45,6 +45,64 @@ class ModelEvaluator:
         logger = logging.getLogger(__name__)
         return logger
     
+    def performance_vs_baseline(self, ml_predictions: np.ndarray, 
+                              bs_predictions: np.ndarray,
+                              actual_prices: np.ndarray,
+                              model_name: str = "ML Model") -> Dict:
+        """
+        Compare ML model performance against Black-Scholes baseline
+        
+        Args:
+            ml_predictions: ML model predictions
+            bs_predictions: Black-Scholes predictions
+            actual_prices: Actual option prices
+            model_name: Name of ML model
+            
+        Returns:
+            Dictionary with comparison results
+        """
+        try:
+            # Evaluate both models
+            ml_metrics = self.evaluate_model_performance(actual_prices, ml_predictions, model_name)
+            bs_metrics = self.evaluate_model_performance(actual_prices, bs_predictions, "Black-Scholes")
+            
+            # Calculate improvement metrics
+            mse_improvement = (bs_metrics['mse'] - ml_metrics['mse']) / bs_metrics['mse'] if bs_metrics['mse'] != 0 else 0.0
+            mae_improvement = (bs_metrics['mae'] - ml_metrics['mae']) / bs_metrics['mae'] if bs_metrics['mae'] != 0 else 0.0
+            r2_improvement = ml_metrics['r2'] - bs_metrics['r2']
+            
+            # Statistical significance test
+            ml_errors = ml_predictions - actual_prices
+            bs_errors = bs_predictions - actual_prices
+            
+            significance_test = self.statistical_significance_test(
+                ml_errors, bs_errors, model_name, "Black-Scholes"
+            )
+            
+            comparison_results = {
+                'ml_model_metrics': ml_metrics,
+                'baseline_metrics': bs_metrics,
+                'mse_improvement_pct': mse_improvement * 100,
+                'mae_improvement_pct': mae_improvement * 100,
+                'r2_improvement': r2_improvement,
+                'directional_accuracy_diff': (ml_metrics['directional_accuracy'] - 
+                                            bs_metrics['directional_accuracy']),
+                'statistical_test': significance_test,
+                'ml_model_better': ml_metrics['mse'] < bs_metrics['mse']
+            }
+            
+            # Log results
+            if mse_improvement > 0:
+                self.logger.info(f"{model_name} outperforms Black-Scholes by {mse_improvement:.1%} (MSE)")
+            else:
+                self.logger.info(f"Black-Scholes outperforms {model_name} by {abs(mse_improvement):.1%} (MSE)")
+            
+            return comparison_results
+            
+        except Exception as e:
+            self.logger.error(f"Error comparing with baseline: {str(e)}")
+            return {}
+    
     def evaluate_model_performance(self, y_true: np.ndarray, y_pred: np.ndarray,
                                  model_name: str = "Model") -> Dict[str, float]:
         """

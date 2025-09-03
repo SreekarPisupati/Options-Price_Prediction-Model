@@ -494,7 +494,7 @@ class OptionsFeatureEngineering:
             
             # Remove infinite and NaN values
             option_df = option_df.replace([np.inf, -np.inf], np.nan)
-            option_df = option_df.fillna(method='ffill').fillna(method='bfill')
+            option_df = option_df.ffill().bfill()
             
             self.logger.info(f"Feature engineering completed. Final shape: {option_df.shape}")
             return option_df
