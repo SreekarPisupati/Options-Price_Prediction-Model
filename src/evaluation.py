@@ -730,13 +730,19 @@ class PerformanceAnalyzer:
             report_lines.append("-" * 30)
             
             for model_name, metrics in evaluation_results.items():
-                report_lines.append(f"\n{model_name}:")
-                report_lines.append(f"  RMSE: {metrics.get('rmse', 0):.4f}")
-                report_lines.append(f"  MAE:  {metrics.get('mae', 0):.4f}")
-                report_lines.append(f"  R²:   {metrics.get('r2', 0):.4f}")
-                report_lines.append(f"  MAPE: {metrics.get('mape', 0):.2f}%")
-                report_lines.append(f"  Directional Accuracy: {metrics.get('directional_accuracy', 0):.2%}")
-                report_lines.append(f"  Sample Size: {metrics.get('sample_size', 0)}")
+                # Handle case where metrics might be a float (like improvement percentage)
+                if isinstance(metrics, (int, float)):
+                    report_lines.append(f"\n{model_name}: {metrics:.4f}")
+                elif isinstance(metrics, dict):
+                    report_lines.append(f"\n{model_name}:")
+                    report_lines.append(f"  RMSE: {metrics.get('rmse', 0):.4f}")
+                    report_lines.append(f"  MAE:  {metrics.get('mae', 0):.4f}")
+                    report_lines.append(f"  R²:   {metrics.get('r2', 0):.4f}")
+                    report_lines.append(f"  MAPE: {metrics.get('mape', 0):.2f}%")
+                    report_lines.append(f"  Directional Accuracy: {metrics.get('directional_accuracy', 0):.2%}")
+                    report_lines.append(f"  Sample Size: {metrics.get('sample_size', 0)}")
+                else:
+                    report_lines.append(f"\n{model_name}: {str(metrics)}")
             
             # Backtesting Section
             if backtest_results:
@@ -912,10 +918,16 @@ class OptionsBacktestingFramework:
                             sentiment_data: Dict) -> Optional[Dict]:
         """Process single option chain for backtesting"""
         try:
+            # Add current_price to option data if missing
+            option_df = option_data.copy()
+            if 'current_price' not in option_df.columns:
+                current_price = historical_data['Close'].iloc[-1]
+                option_df['current_price'] = current_price
+            
             # Feature engineering
             feature_engineer = OptionsFeatureEngineering()
             engineered_features = feature_engineer.engineer_all_features(
-                historical_data, option_data, sentiment_data
+                historical_data, option_df, sentiment_data
             )
             
             # Prepare features

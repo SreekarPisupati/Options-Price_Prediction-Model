@@ -307,21 +307,26 @@ class OptionsDataCollector:
     def _save_data_to_file(self, data: Dict, symbol: str):
         """Save collected data to files"""
         try:
+            import os
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            
+            # Ensure data directory exists
+            data_dir = "../data/raw"
+            os.makedirs(data_dir, exist_ok=True)
             
             # Save historical data
             if not data['historical_data'].empty:
-                hist_filename = f"data/raw/{symbol}_historical_{timestamp}.csv"
+                hist_filename = os.path.join(data_dir, f"{symbol}_historical_{timestamp}.csv")
                 data['historical_data'].to_csv(hist_filename, index=False)
             
             # Save option chains
             for exp_date, chain_data in data['option_chains'].items():
                 if 'calls' in chain_data and not chain_data['calls'].empty:
-                    calls_filename = f"data/raw/{symbol}_calls_{exp_date}_{timestamp}.csv"
+                    calls_filename = os.path.join(data_dir, f"{symbol}_calls_{exp_date}_{timestamp}.csv")
                     chain_data['calls'].to_csv(calls_filename, index=False)
                 
                 if 'puts' in chain_data and not chain_data['puts'].empty:
-                    puts_filename = f"data/raw/{symbol}_puts_{exp_date}_{timestamp}.csv"
+                    puts_filename = os.path.join(data_dir, f"{symbol}_puts_{exp_date}_{timestamp}.csv")
                     chain_data['puts'].to_csv(puts_filename, index=False)
                     
         except Exception as e:

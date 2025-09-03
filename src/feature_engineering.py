@@ -270,22 +270,41 @@ class OptionsFeatureEngineering:
         try:
             df = data.copy()
             
-            # Ensure we have a datetime column
-            if 'Date' in df.columns:
-                date_col = pd.to_datetime(df['Date'])
-            elif isinstance(df.index, pd.DatetimeIndex):
+            # Find datetime column
+            date_col = None
+            datetime_columns = ['Date', 'date', 'timestamp', 'lastTradeDate']
+            
+            for col in datetime_columns:
+                if col in df.columns:
+                    try:
+                        date_col = pd.to_datetime(df[col], errors='coerce')
+                        break
+                    except:
+                        continue
+            
+            if date_col is None and isinstance(df.index, pd.DatetimeIndex):
                 date_col = df.index
-            else:
+            
+            if date_col is None or date_col.isna().all():
                 self.logger.warning("No datetime column found")
+                # Use current date as fallback
+                current_date = pd.Timestamp.now()
+                df['year'] = current_date.year
+                df['month'] = current_date.month
+                df['day'] = current_date.day
+                df['dayofweek'] = current_date.dayofweek
+                df['quarter'] = current_date.quarter
+                df['is_month_end'] = 0
+                df['is_month_start'] = 0
                 return df
             
             # Basic time features
-            df['year'] = date_col.year
-            df['month'] = date_col.month
-            df['day'] = date_col.day
-            df['dayofweek'] = date_col.dayofweek
-            df['dayofyear'] = date_col.dayofyear
-            df['quarter'] = date_col.quarter
+            df['year'] = date_col.dt.year
+            df['month'] = date_col.dt.month
+            df['day'] = date_col.dt.day
+            df['dayofweek'] = date_col.dt.dayofweek
+            df['dayofyear'] = date_col.dt.dayofyear
+            df['quarter'] = date_col.dt.quarter
             
             # Market timing features
             df['is_monday'] = (df['dayofweek'] == 0).astype(int)

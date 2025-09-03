@@ -1,0 +1,34 @@
+Error generating performance report
+
+
+TRAINING RESULTS
+--------------------
+Best performing model: xgboost
+
+random_forest:
+  R²: -2.1280
+  MSE: 2061.584098
+
+xgboost:
+  R²: 0.8237
+  MSE: 116.171287
+
+lightgbm:
+  R²: -7.0859
+  MSE: 5329.205438
+
+neural_network_deep:
+  R²: -13542198.3357
+  MSE: 8925254671.215313
+
+ensemble:
+  R²: -1.6542
+  MSE: 1749.329902
+
+
+SYSTEM CONFIGURATION
+----------------------
+Symbols analyzed: AAPL, MSFT, GOOGL
+Features engineered: 50
+Models trained: 5
+Real-time monitoring: Inactive
