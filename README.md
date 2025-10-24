@@ -361,11 +361,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 This software is for educational and research purposes only. It is not intended as financial advice. Trading options involves substantial risk and may result in losses. Always consult with qualified financial professionals before making investment decisions.
 
-## 📞 Support
-
-- **Issues**: Report bugs and request features via GitHub Issues
-- **Documentation**: Comprehensive API docs in the `/docs` folder
-- **Examples**: Jupyter notebooks with detailed examples in `/notebooks`
 
 ## 🏆 Acknowledgments
 
